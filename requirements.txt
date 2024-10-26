@@ -1,0 +1,10 @@
+pandas
+transformers
+sentencepiece
+scikit-learn
+matplotlib
+emoji
+catboost
+lightgbm
+xgboost
+torch

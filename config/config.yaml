@@ -1,0 +1,97 @@
+# 基本設定
+base:
+  seed: 42  # シード値（再現性のため）
+  num_workers: 8  # 並列処理ワーカー数
+  device: 0  # GPUデバイス番号（0 = 最初のGPU）
+  base_output_dir: 'result'  # 出力ディレクトリ
+
+# データ設定
+data:
+  train_file: 'data/train.csv'  # 訓練データのパス
+  test_file: 'data/test.csv'  # テストデータのパス
+  translate_reviews: True  # レビューを翻訳するか
+
+# 特徴抽出設定
+feature_extraction:
+  type: bert_sentiment  # 特徴抽出タイプ（例：BERTでの感情分析）
+  pretrained_model_name: "nlptown/bert-base-multilingual-uncased-sentiment"  # 事前学習モデル
+  batch_size: 16  # バッチサイズ
+  num_epochs: 3  # エポック数
+  num_classes: 5  # クラス数（感情分類のクラス数）
+  all_train: True  # データ全体を訓練に使うか
+  label_smoothing: 0.3  # ラベルスムージング
+  dropout_ratio: 0.5  # ドロップアウト率
+  max_length: 512  # トークンの最大長さ
+  test_size: 0.2  # テストデータの割合
+  shuffle: True  # データのシャッフル
+  num_warmup_steps: 0  # ウォームアップステップ数
+
+  optimizer:
+    type: 'adamw'  # オプティマイザーの種類 ['adamw', 'adam', 'sgd', 'rmsprop' ]
+    lr: 1e-5  # 学習率
+    weight_decay: 0.01  # 重み減衰
+    momentum: 0.9  # モーメンタム
+
+  save_metrics: True  # メトリクスを保存するか
+  output_dir: 'feature_extraction'  # 出力ディレクトリ
+  pca_component: 2  # PCA成分数（次元削減）
+
+  skip_if_files_exist: False  # ファイルがあればステップをスキップ
+  trained_model_path: None  # 学習済みモデルのパスがあれば設定
+  extracted_data_file:  None # 特徴抽出後のデータファイルパスがあれば設定
+
+# ブースティング設定（LightGBM、CatBoost、XGBoost、RandomForest）
+boosting:
+  num_trials: 10  # 試行回数（異なるシードで試行）
+  kfold_split: 10  # KFold交差検証の分割数
+
+  weights:  # 各モデルのアンサンブル重み
+    lightgbm: 0.4
+    catboost: 0.3
+    xgboost: 0.2
+    random_forest: 0.1
+
+  lightgbm:
+    objective: 'regression'  # 回帰問題として設定
+    metric: 'None'  # カスタム評価指標を使用
+    boosting_type: 'gbdt'  # 勾配ブースティング決定木（GBDT）
+    max_depth: 5  # 木の最大深さ
+    learning_rate: 0.07  # 学習率
+    num_boost_round: 1000  # ラウンド数
+    early_stopping: 100  # アーリーストッピング
+    verbose: -1  # ログ出力レベル
+    max_bin: 512  # ヒストグラムビン数
+    lambda_l1: 0.5  # L1正則化
+    lambda_l2: 0.5  # L2正則化
+    bagging_fraction: 0.8  # バギングデータ割合
+    bagging_freq: 5  # バギング頻度
+
+  catboost:
+    iterations: 1000  # ラウンド数
+    learning_rate: 0.1  # 学習率
+    depth: 5  # 木の深さ
+    early_stopping: 100  # アーリーストッピング
+    loss_function: 'RMSE'  # 損失関数
+    logging_level: 'Silent'  # ログ出力レベル
+    l2_leaf_reg: 5  # L2正則化
+
+  xgboost:
+    objective: 'reg:squarederror'  # 回帰問題として設定
+    learning_rate: 0.1  # 学習率
+    num_boost_round: 1000  # ラウンド数
+    early_stopping: 100  # アーリーストッピング
+    subsample: 0.8  # サブサンプル割合
+    max_depth: 5  # 木の深さ
+    alpha: 0.3  # L1正則化（α）
+    lambda: 0.3  # L2正則化（λ）
+
+  random_forest:
+    n_estimators: 80  # 決定木の数
+    max_depth: 7  # 木の深さ
+    min_samples_split: 5  # ノード分割の最小サンプル数
+    random_state: 42  # シード値
+
+# 翻訳と言語検出設定
+translate:
+  language_detector_model: "papluca/xlm-roberta-base-language-detection"  # 言語検出モデル
+  translate_model: "Helsinki-NLP/opus-mt-mul-en"  # 翻訳モデル
